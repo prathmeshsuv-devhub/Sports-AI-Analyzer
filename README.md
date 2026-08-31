@@ -1,5 +1,7 @@
 # 🏆 Sports AI Analyzer
+## 🌐 Live Demo
 
+👉 [Open Sports AI Analyzer](https://sports-ai-analyzer-krniaa4moewwzxjssgwv5f.streamlit.app)
 An interactive sports player performance analytics dashboard built using Python and Streamlit.
 
 ## 📌 Project Overview

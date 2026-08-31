@@ -593,62 +593,406 @@ else:
         )
 
 # =========================================================
-# PLAYER PERFORMANCE REPORT
 # =========================================================
+# PDF PLAYER PERFORMANCE REPORT
+# =========================================================
+
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import simpleSplit
+from io import BytesIO
 
 st.header("📄 Player Performance Report")
 
 report_player = st.selectbox(
-    "Select Player for Report",
+    "Select Player for PDF Report",
     score_df["Player"].tolist(),
-    key="report_player"
+    key="pdf_report_player"
 )
 
 report_data = score_df[
     score_df["Player"] == report_player
 ].iloc[0]
 
-report_text = f"""
-SPORTS AI ANALYZER
-PLAYER PERFORMANCE REPORT
-========================================
+# -----------------------------
+# Calculate strengths
+# -----------------------------
 
-Player Name: {report_data['Player']}
+report_strengths = []
 
-Performance Metrics
-----------------------------------------
-Performance Score : {report_data['Performance Score']:.2f}/100
-Runs              : {report_data['Runs']:.0f}
-Goals             : {report_data['Goals']:.0f}
-Assists           : {report_data['Assists']:.0f}
-Pass Accuracy     : {report_data['Pass_Accuracy']:.1f}%
-Fitness            : {report_data['Fitness']:.1f}%
+if report_data["Runs"] >= score_df["Runs"].median():
+    report_strengths.append("Strong run-scoring performance")
 
-Performance Summary
-----------------------------------------
-"""
+if report_data["Goals"] >= score_df["Goals"].median():
+    report_strengths.append("Good goal-scoring contribution")
 
-if report_data["Performance Score"] >= 80:
-    report_text += "Excellent overall performance."
+if report_data["Assists"] >= score_df["Assists"].median():
+    report_strengths.append("Good assist contribution")
 
-elif report_data["Performance Score"] >= 60:
-    report_text += "Good overall performance with room for improvement."
+if report_data["Pass_Accuracy"] >= score_df["Pass_Accuracy"].median():
+    report_strengths.append("Strong passing accuracy")
+
+if report_data["Fitness"] >= score_df["Fitness"].median():
+    report_strengths.append("Good fitness level")
+
+# -----------------------------
+# Calculate improvements
+# -----------------------------
+
+report_improvements = []
+
+if report_data["Runs"] < score_df["Runs"].median():
+    report_improvements.append("Improve run-scoring performance")
+
+if report_data["Goals"] < score_df["Goals"].median():
+    report_improvements.append("Improve goal-scoring contribution")
+
+if report_data["Assists"] < score_df["Assists"].median():
+    report_improvements.append("Create more assists")
+
+if report_data["Pass_Accuracy"] < score_df["Pass_Accuracy"].median():
+    report_improvements.append("Improve passing accuracy")
+
+if report_data["Fitness"] < score_df["Fitness"].median():
+    report_improvements.append("Improve fitness level")
+
+# -----------------------------
+# Rating
+# -----------------------------
+
+report_score = report_data["Performance Score"]
+
+if report_score >= 80:
+    report_rating = "Excellent"
+
+elif report_score >= 60:
+    report_rating = "Good"
+
+elif report_score >= 40:
+    report_rating = "Average"
 
 else:
-    report_text += "The player has potential for improvement."
+    report_rating = "Needs Improvement"
+
+# -----------------------------
+# Recommendation
+# -----------------------------
+
+if report_score >= 80:
+
+    report_recommendation = (
+        "Maintain the current performance level and "
+        "focus on consistency and further development."
+    )
+
+elif report_score >= 60:
+
+    report_recommendation = (
+        "Continue improving weaker metrics to increase "
+        "the overall performance score."
+    )
+
+else:
+
+    report_recommendation = (
+        "Focus on the weakest performance metrics and "
+        "build consistency across all areas."
+    )
 
 
-st.text_area(
-    "📋 Report Preview",
-    report_text,
-    height=300
-)
+# =========================================================
+# PDF GENERATION FUNCTION
+# =========================================================
+
+def create_player_pdf():
+
+    buffer = BytesIO()
+
+    pdf = canvas.Canvas(
+        buffer,
+        pagesize=A4
+    )
+
+    width, height = A4
+
+    y = height - 50
+
+    # -----------------------------
+    # Title
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        20
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Sports AI Analyzer"
+    )
+
+    y -= 30
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        16
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Player Performance Report"
+    )
+
+    y -= 35
+
+    # -----------------------------
+    # Player Information
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        12
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        f"Player: {report_data['Player']}"
+    )
+
+    y -= 25
+
+    pdf.setFont(
+        "Helvetica",
+        11
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        f"Overall Rating: {report_rating}"
+    )
+
+    y -= 25
+
+    pdf.drawString(
+        50,
+        y,
+        f"Performance Score: {report_score:.2f}/100"
+    )
+
+    y -= 35
+
+    # -----------------------------
+    # Performance Metrics
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Performance Metrics"
+    )
+
+    y -= 25
+
+    pdf.setFont(
+        "Helvetica",
+        11
+    )
+
+    metrics = [
+        f"Runs: {report_data['Runs']:.0f}",
+        f"Goals: {report_data['Goals']:.0f}",
+        f"Assists: {report_data['Assists']:.0f}",
+        f"Pass Accuracy: {report_data['Pass_Accuracy']:.1f}%",
+        f"Fitness: {report_data['Fitness']:.1f}%"
+    ]
+
+    for metric in metrics:
+
+        pdf.drawString(
+            65,
+            y,
+            "• " + metric
+        )
+
+        y -= 20
+
+    y -= 15
+
+    # -----------------------------
+    # Strengths
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Strengths"
+    )
+
+    y -= 23
+
+    pdf.setFont(
+        "Helvetica",
+        11
+    )
+
+    if report_strengths:
+
+        for strength in report_strengths:
+
+            pdf.drawString(
+                65,
+                y,
+                "• " + strength
+            )
+
+            y -= 20
+
+    else:
+
+        pdf.drawString(
+            65,
+            y,
+            "• No major strengths identified."
+        )
+
+        y -= 20
+
+    y -= 15
+
+    # -----------------------------
+    # Improvements
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Areas for Improvement"
+    )
+
+    y -= 23
+
+    pdf.setFont(
+        "Helvetica",
+        11
+    )
+
+    if report_improvements:
+
+        for improvement in report_improvements:
+
+            pdf.drawString(
+                65,
+                y,
+                "• " + improvement
+            )
+
+            y -= 20
+
+    else:
+
+        pdf.drawString(
+            65,
+            y,
+            "• No major improvement areas identified."
+        )
+
+        y -= 20
+
+    y -= 15
+
+    # -----------------------------
+    # Recommendation
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    pdf.drawString(
+        50,
+        y,
+        "Recommendation"
+    )
+
+    y -= 23
+
+    pdf.setFont(
+        "Helvetica",
+        11
+    )
+
+    recommendation_lines = simpleSplit(
+        report_recommendation,
+        "Helvetica",
+        11,
+        width - 110
+    )
+
+    for line in recommendation_lines:
+
+        pdf.drawString(
+            65,
+            y,
+            line
+        )
+
+        y -= 18
+
+    y -= 25
+
+    # -----------------------------
+    # Footer
+    # -----------------------------
+
+    pdf.setFont(
+        "Helvetica-Oblique",
+        9
+    )
+
+    pdf.drawString(
+        50,
+        30,
+        "Generated by Sports AI Analyzer"
+    )
+
+    pdf.save()
+
+    buffer.seek(0)
+
+    return buffer
+
+
+# =========================================================
+# DOWNLOAD PDF
+# =========================================================
+
+pdf_file = create_player_pdf()
 
 st.download_button(
-    "⬇️ Download Player Performance Report",
-    data=report_text,
-    file_name=f"{report_player}_Performance_Report.txt",
-    mime="text/plain"
+    label="⬇️ Download PDF Performance Report",
+    data=pdf_file,
+    file_name=f"{report_player}_Performance_Report.pdf",
+    mime="application/pdf"
 )
 # =========================================================
 # =========================================================

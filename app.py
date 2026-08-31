@@ -652,17 +652,16 @@ st.download_button(
 )
 # =========================================================
 # =========================================================
-# REAL AI PLAYER ANALYSIS
 # =========================================================
-
-from openai import OpenAI
+# FREE AI-STYLE PLAYER ANALYSIS
+# =========================================================
 
 st.header("🤖 AI Player Analysis")
 
 selected_player = st.selectbox(
     "Select a Player",
     score_df["Player"].tolist(),
-    key="ai_player"
+    key="free_ai_player"
 )
 
 selected_data = score_df[
@@ -670,8 +669,12 @@ selected_data = score_df[
 ].iloc[0]
 
 st.subheader(
-    f"📋 {selected_player} Performance"
+    f"📋 {selected_player} Performance Analysis"
 )
+
+# ---------------------------------------------------------
+# PLAYER METRICS
+# ---------------------------------------------------------
 
 c1, c2, c3, c4 = st.columns(4)
 
@@ -699,55 +702,141 @@ with c4:
         f"{selected_data['Fitness']:.1f}%"
     )
 
-if st.button(
-    "🤖 Generate AI Analysis",
-    key="generate_ai_analysis"
-):
+# ---------------------------------------------------------
+# STRENGTHS
+# ---------------------------------------------------------
 
-    try:
+strengths = []
 
-        client = OpenAI(
-            api_key=st.secrets["OPENAI_API_KEY"]
-        )
+if selected_data["Runs"] >= score_df["Runs"].median():
+    strengths.append("Strong run-scoring performance")
 
-        prompt = f"""
-Analyze this sports player's performance:
+if selected_data["Goals"] >= score_df["Goals"].median():
+    strengths.append("Good goal-scoring contribution")
 
-Player: {selected_player}
-Runs: {selected_data['Runs']}
-Goals: {selected_data['Goals']}
-Assists: {selected_data['Assists']}
-Pass Accuracy: {selected_data['Pass_Accuracy']}%
-Fitness: {selected_data['Fitness']}%
-Performance Score: {selected_data['Performance Score']}/100
+if selected_data["Assists"] >= score_df["Assists"].median():
+    strengths.append("Good assist contribution")
 
-Give a clear professional analysis with:
+if selected_data["Pass_Accuracy"] >= score_df["Pass_Accuracy"].median():
+    strengths.append("Strong passing accuracy")
 
-1. Overall Performance
-2. Strengths
-3. Areas for Improvement
-4. Recommendation
-"""
+if selected_data["Fitness"] >= score_df["Fitness"].median():
+    strengths.append("Good fitness level")
 
-        with st.spinner(
-            "🤖 AI is analyzing the player..."
-        ):
+# ---------------------------------------------------------
+# AREAS FOR IMPROVEMENT
+# ---------------------------------------------------------
 
-            response = client.responses.create(
-                model="gpt-5-mini",
-                input=prompt
-            )
+improvements = []
 
-        st.subheader("🤖 AI Performance Analysis")
+if selected_data["Runs"] < score_df["Runs"].median():
+    improvements.append("Improve run-scoring performance")
 
-        st.write(response.output_text)
+if selected_data["Goals"] < score_df["Goals"].median():
+    improvements.append("Improve goal-scoring contribution")
 
-    except Exception as e:
+if selected_data["Assists"] < score_df["Assists"].median():
+    improvements.append("Create more assists")
 
-        st.error(
-            f"❌ AI Analysis Error: {e}"
-        )
+if selected_data["Pass_Accuracy"] < score_df["Pass_Accuracy"].median():
+    improvements.append("Improve passing accuracy")
 
+if selected_data["Fitness"] < score_df["Fitness"].median():
+    improvements.append("Improve fitness level")
+
+# ---------------------------------------------------------
+# OVERALL RATING
+# ---------------------------------------------------------
+
+score = selected_data["Performance Score"]
+
+if score >= 80:
+    rating = "Excellent ⭐⭐⭐⭐⭐"
+
+elif score >= 60:
+    rating = "Good ⭐⭐⭐⭐"
+
+elif score >= 40:
+    rating = "Average ⭐⭐⭐"
+
+else:
+    rating = "Needs Improvement ⭐⭐"
+
+st.success(
+    f"🏆 Overall Rating: {rating}"
+)
+
+# ---------------------------------------------------------
+# DISPLAY STRENGTHS
+# ---------------------------------------------------------
+
+st.subheader("✅ Strengths")
+
+if strengths:
+
+    for strength in strengths:
+        st.write(f"• {strength}")
+
+else:
+
+    st.write(
+        "• No major strengths identified from the current data."
+    )
+
+# ---------------------------------------------------------
+# DISPLAY IMPROVEMENTS
+# ---------------------------------------------------------
+
+st.subheader("⚠️ Areas for Improvement")
+
+if improvements:
+
+    for improvement in improvements:
+        st.write(f"• {improvement}")
+
+else:
+
+    st.write(
+        "• No major improvement areas identified."
+    )
+
+# ---------------------------------------------------------
+# RECOMMENDATION
+# ---------------------------------------------------------
+
+st.subheader("💡 Recommendation")
+
+if score >= 80:
+
+    recommendation = (
+        "Maintain the current performance level and focus "
+        "on consistency and further development."
+    )
+
+elif score >= 60:
+
+    recommendation = (
+        "The player is performing well. Focus on the weaker "
+        "metrics to improve the overall performance score."
+    )
+
+else:
+
+    recommendation = (
+        "Focus on the weakest performance metrics and "
+        "build consistency across all areas."
+    )
+
+st.info(recommendation)
+
+# ---------------------------------------------------------
+# NOTE
+# ---------------------------------------------------------
+
+st.caption(
+    "ℹ️ This analysis is generated locally from the uploaded "
+    "sports data and does not require an API or paid service."
+)
 # =========================================================
 # FOOTER
 # =========================================================

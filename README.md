@@ -56,7 +56,23 @@ The application can generate a downloadable PDF report containing:
 - Areas for improvement
 - Performance rating
 - Recommendations
+## 📸 Screenshots
 
+### 📌 Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+### 🆚 Player Comparison
+
+![Player Comparison](screenshots/comparison.png)
+
+### 🤖 AI Player Analysis
+
+![AI Player Analysis](screenshots/ai-analysis.png)
+
+### 📄 PDF Performance Report
+
+![PDF Performance Report](screenshots/report.png)
 ## 🤖 AI Player Analysis
 
 The application provides automated player analysis based on the uploaded performance data.
